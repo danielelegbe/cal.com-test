@@ -1,0 +1,20 @@
+# nixpacks.toml
+
+[phases.install]
+nixpkgs = [
+  "yarn"
+]
+run = """
+  yarn install --frozen-lockfile --check-files
+  if [ $? -ne 0 ]; then
+    yarn install --immutable --check-cache
+  fi
+"""
+
+[phases.build]
+run = """
+  yarn build
+"""
+
+[phases.start]
+cmd = "yarn start"
