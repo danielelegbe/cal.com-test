@@ -2,13 +2,11 @@
 
 [phases.install]
 nixpkgs = [
+  "nodejs",  # This will use the default/latest version of Node.js available in Nixpkgs
   "yarn"
 ]
 run = """
-  yarn install --frozen-lockfile --check-files
-  if [ $? -ne 0 ]; then
-    yarn install --immutable --check-cache
-  fi
+  yarn install --frozen-lockfile --check-files || yarn install --immutable --check-cache
 """
 
 [phases.build]
