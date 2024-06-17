@@ -20,19 +20,19 @@ ENV NEXT_PUBLIC_WEBAPP_URL=http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER \
     CALENDSO_ENCRYPTION_KEY=${CALENDSO_ENCRYPTION_KEY} \
     NODE_OPTIONS=--max-old-space-size=${MAX_OLD_SPACE_SIZE}
 
-COPY calcom/package.json calcom/yarn.lock calcom/.yarnrc.yml calcom/playwright.config.ts calcom/turbo.json calcom/git-init.sh calcom/git-setup.sh ./
-COPY calcom/.yarn ./.yarn
-COPY calcom/apps/web ./apps/web
-COPY calcom/apps/api/v2 ./apps/api/v2
-COPY calcom/packages ./packages
-COPY calcom/tests ./tests
+COPY ./package.json calcom/yarn.lock ./.yarnrc.yml .playwright.config.ts ./calcom/turbo.json calcom/git-init.sh ./git-setup.sh ./
+COPY ./.yarn ./.yarn
+COPY ./apps/web ./apps/web
+COPY ./apps/api/v2 ./apps/api/v2
+COPY ./packages ./packages
+COPY ./tests ./tests
 
 RUN yarn config set httpTimeout 1200000
-RUN npx turbo prune --scope=@calcom/web --docker
+RUN npx turbo prune --docker
 RUN yarn install
 RUN yarn db-deploy
 RUN yarn --cwd packages/prisma seed-app-store
-RUN yarn --cwd apps/web workspace @calcom/web run build
+RUN yarn run build
 
 # RUN yarn plugin import workspace-tools && \
 #     yarn workspaces focus --all --production
@@ -45,12 +45,12 @@ ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 
 ENV NODE_ENV production
 
-COPY calcom/package.json calcom/.yarnrc.yml calcom/yarn.lock calcom/turbo.json ./
-COPY calcom/.yarn ./.yarn
-COPY --from=builder /calcom/node_modules ./node_modules
-COPY --from=builder /calcom/packages ./packages
-COPY --from=builder /calcom/apps/web ./apps/web
-COPY --from=builder /calcom/packages/prisma/schema.prisma ./prisma/schema.prisma
+COPY ./package.json ./.yarnrc.yml ./yarn.lock ./turbo.json ./
+COPY ./.yarn ./.yarn
+COPY --from=builder ./node_modules ./node_modules
+COPY --from=builder ./packages ./packages
+COPY --from=builder ./apps/web ./apps/web
+COPY --from=builder ./packages/prisma/schema.prisma ./prisma/schema.prisma
 COPY scripts scripts
 
 # Save value used during this build stage. If NEXT_PUBLIC_WEBAPP_URL and BUILT_NEXT_PUBLIC_WEBAPP_URL differ at
@@ -64,7 +64,7 @@ FROM node:18 as runner
 
 
 WORKDIR /calcom
-COPY --from=builder-two /calcom ./
+COPY --from=builder-two ./ ./
 ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
     BUILT_NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL
@@ -75,4 +75,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=30s --retries=5 \
     CMD wget --spider http://localhost:3000 || exit 1
 
-CMD ["/calcom/scripts/start.sh"]
+CMD ["./scripts/start.sh"]
